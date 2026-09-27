@@ -1,0 +1,1391 @@
+<title>Flugsuche Graz &amp; Wien</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=JetBrains+Mono:wght@500;600&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+  :root {
+    --bg: #EDF1F3;
+    --surface: #FFFFFF;
+    --surface-2: #F4F7F8;
+    --ink: #132026;
+    --muted: #56666E;
+    --line: #D6DFE3;
+    --accent: #0E6A4C;
+    --accent-ink: #FFFFFF;
+    --accent-soft: #DDEFE7;
+    --grz: #0E7A4E;
+    --grz-soft: #DFF1E8;
+    --vie: #BF2730;
+    --vie-soft: #FBE5E6;
+    --deal: #8F5400;
+    --deal-soft: #FCEFD6;
+    --warn-soft: #FFF3DC;
+    --err-soft: #FCE8E9;
+    --board: #17232B;
+    --board-ink: #F4D35E;
+    --board-edge: transparent;
+    --knob: #FFFFFF;
+    --shade: rgba(19, 32, 38, .08);
+    --display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+    --body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #0C1317;
+      --surface: #141F25;
+      --surface-2: #19262D;
+      --ink: #E3EBEE;
+      --muted: #93A3AB;
+      --line: #27363E;
+      --accent: #3DB688;
+      --accent-ink: #04150E;
+      --accent-soft: #16372A;
+      --grz: #52C493;
+      --grz-soft: #143126;
+      --vie: #FF7479;
+      --vie-soft: #3A1A1D;
+      --deal: #F2B84B;
+      --deal-soft: #3A2B10;
+      --warn-soft: #33270F;
+      --err-soft: #3A1A1D;
+      --board: #070B0D;
+      --board-ink: #F4D35E;
+      --board-edge: #2A3942;
+      --knob: #FFFFFF;
+      --shade: rgba(0, 0, 0, .35);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0C1317;
+    --surface: #141F25;
+    --surface-2: #19262D;
+    --ink: #E3EBEE;
+    --muted: #93A3AB;
+    --line: #27363E;
+    --accent: #3DB688;
+    --accent-ink: #04150E;
+    --accent-soft: #16372A;
+    --grz: #52C493;
+    --grz-soft: #143126;
+    --vie: #FF7479;
+    --vie-soft: #3A1A1D;
+    --deal: #F2B84B;
+    --deal-soft: #3A2B10;
+    --warn-soft: #33270F;
+    --err-soft: #3A1A1D;
+    --board: #070B0D;
+    --board-ink: #F4D35E;
+    --board-edge: #2A3942;
+    --knob: #FFFFFF;
+    --shade: rgba(0, 0, 0, .35);
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.5 var(--body);
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .wrap {
+    max-width: 1220px;
+    margin: 0 auto;
+    padding-inline: clamp(16px, 3vw, 32px);
+    padding-block: 28px 56px;
+  }
+
+  /* ---------- header ---------- */
+  .eyebrow {
+    margin: 0;
+    font: 600 12px/1.2 var(--body);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  h1 {
+    margin: 6px 0 0;
+    font: 700 clamp(38px, 6.5vw, 60px)/.95 var(--display);
+    letter-spacing: .005em;
+    text-wrap: balance;
+  }
+  h1 .amp { color: var(--muted); font-weight: 600; }
+  .lede { margin: 10px 0 0; max-width: 62ch; color: var(--muted); }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 310px minmax(0, 1fr);
+    gap: 24px;
+    margin-top: 26px;
+    align-items: start;
+  }
+
+  /* ---------- filter panel ---------- */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    position: sticky;
+    top: calc(env(safe-area-inset-top, 0px) + 16px);
+    max-height: calc(100vh - 32px);
+    overflow: auto;
+  }
+  .panel > summary {
+    list-style: none;
+    cursor: pointer;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 2px 12px;
+    padding: 14px 18px;
+  }
+  .panel > summary::-webkit-details-marker { display: none; }
+  .sum-title { font: 700 22px/1.1 var(--display); }
+  .sum-text { grid-column: 1; font-size: 14px; color: var(--muted); }
+  .chev {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+    width: 10px; height: 10px;
+    border-right: 2px solid var(--muted);
+    border-bottom: 2px solid var(--muted);
+    transform: rotate(45deg);
+    transition: transform .15s;
+  }
+  .panel[open] .chev { transform: rotate(-135deg); }
+  .panel[open] .sum-text { display: none; }
+  .panel-body {
+    display: grid;
+    gap: 22px;
+    padding: 4px 18px 20px;
+  }
+
+  fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+  .group { display: grid; gap: 8px; }
+  .label, legend.label {
+    padding: 0;
+    font: 600 12px/1.2 var(--body);
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  legend.label { margin-bottom: 8px; }
+  .hint { margin: 0; font-size: 13px; color: var(--muted); }
+  .sub { display: grid; gap: 10px; margin-top: 10px; }
+
+  .seg {
+    position: relative;
+    display: flex;
+    gap: 3px;
+    padding: 3px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+  }
+  .seg input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+  .seg label {
+    flex: 1 1 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 7px 6px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--muted);
+    white-space: nowrap;
+    user-select: none;
+  }
+  .seg label:hover { color: var(--ink); }
+  .seg input:checked + label {
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: 0 1px 2px var(--shade), inset 0 0 0 1px var(--line);
+  }
+  .seg input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .seg-sm label { font-size: 13px; padding: 6px 4px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .dot.grz { background: var(--grz); }
+  .dot.vie { background: var(--vie); }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: end; }
+  .nights { display: grid; gap: 6px; }
+  .nights > span { font-size: 13px; color: var(--muted); }
+  .field { display: grid; gap: 4px; min-width: 0; font-size: 13px; color: var(--muted); }
+  .field input {
+    width: 100%;
+    min-width: 0;
+    padding: 7px 9px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+  }
+  .field input:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    padding: 4px 11px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .chip:hover { border-color: var(--muted); }
+  .chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
+  .budget-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .budget-head .label { min-width: 0; }
+  .budget-val { flex: none; font: 700 22px/1 var(--display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  input[type="range"] { width: 100%; margin: 4px 0 0; accent-color: var(--accent); }
+  .scale { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+
+  .switch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .switch input {
+    appearance: none;
+    -webkit-appearance: none;
+    flex: none;
+    position: relative;
+    width: 40px; height: 24px;
+    margin: 0;
+    border-radius: 999px;
+    background: var(--line);
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .switch input::after {
+    content: "";
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--knob);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .25);
+    transition: transform .15s;
+  }
+  .switch input:checked { background: var(--accent); }
+  .switch input:checked::after { transform: translateX(16px); }
+  .toggles { gap: 14px; }
+
+  /* ---------- results ---------- */
+  .results { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; min-width: 0; }
+  .results > * { min-width: 0; }
+  .status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 14px;
+    min-height: 36px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .live { display: inline-flex; align-items: center; gap: 8px; }
+  .pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--grz); flex: none; }
+  .pulse.off { background: var(--muted); }
+  .pulse.busy { animation: blink 1s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity: .25; } }
+  .btn {
+    padding: 6px 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn:hover:not(:disabled) { border-color: var(--muted); }
+  .btn:disabled { opacity: .55; cursor: default; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+  .note {
+    display: grid;
+    gap: 4px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    font-size: 15px;
+  }
+  .note.warn { background: var(--warn-soft); }
+  .note.err { background: var(--err-soft); }
+  .note.info { background: var(--surface); border: 1px solid var(--line); }
+  .note b { font-weight: 700; }
+  .note p { margin: 0; }
+  .note .btn { justify-self: start; margin-top: 6px; }
+  #notices { display: grid; gap: 10px; }
+  #notices:empty { display: none; }
+
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+    gap: 12px;
+  }
+  .tiles:empty { display: none; }
+  .tile {
+    display: grid;
+    align-content: start;
+    gap: 2px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
+  .tile .k { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--muted); }
+  .tile .v { font: 700 34px/1.05 var(--display); font-variant-numeric: tabular-nums; }
+  .tile .s { font-size: 14px; color: var(--muted); }
+  .tile .v.none { color: var(--muted); }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.6;
+    white-space: nowrap;
+  }
+  .pill.grz { background: var(--grz-soft); color: var(--grz); }
+  .pill.vie { background: var(--vie-soft); color: var(--vie); }
+  .pill.deal { background: var(--deal-soft); color: var(--deal); }
+
+  h2 { margin: 0; font: 700 26px/1.1 var(--display); text-wrap: balance; }
+  .sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; margin-bottom: 10px; }
+  .sec-head .aside { font-size: 14px; color: var(--muted); }
+
+  /* comparison */
+  .cmp-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: 0; }
+  th { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+  td.num { white-space: nowrap; }
+  td .p { font: 700 20px/1.1 var(--display); }
+  td .d { display: block; font-size: 13px; color: var(--muted); }
+  td.win-grz .p { color: var(--grz); }
+  td.win-vie .p { color: var(--vie); }
+  td .na { color: var(--muted); }
+  td .city-cell { font-weight: 600; }
+  .diff-grz { color: var(--grz); font-weight: 600; }
+  .diff-vie { color: var(--vie); font-weight: 600; }
+  .more-row { display: flex; justify-content: center; padding: 10px; }
+
+  /* flight list */
+  .list {
+    container-type: inline-size;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .flight {
+    display: grid;
+    grid-template-columns: 10.5rem minmax(0, .8fr) minmax(0, 1.7fr) auto;
+    grid-template-areas: "route dest when price";
+    gap: 10px 22px;
+    align-items: start;
+    padding: 16px 18px;
+    border-top: 1px solid var(--line);
+  }
+  .flight:first-child { border-top: 0; }
+  .route { grid-area: route; display: flex; align-items: center; gap: 6px; padding-top: 2px; }
+  .dest { grid-area: dest; min-width: 0; }
+  .when { grid-area: when; display: grid; gap: 8px; min-width: 0; }
+  .price { grid-area: price; display: grid; justify-items: end; gap: 3px; text-align: right; }
+  @container (max-width: 720px) {
+    .flight {
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas: "route price" "dest price" "when when";
+      gap: 8px 16px;
+    }
+  }
+
+  .code { display: inline-flex; gap: 2px; }
+  .code i {
+    display: inline-block;
+    width: 1.35em;
+    padding: 5px 0 4px;
+    border-radius: 3px;
+    font: 600 15px/1 var(--mono);
+    font-style: normal;
+    text-align: center;
+    color: var(--board-ink);
+    background-color: var(--board);
+    background-image: linear-gradient(to bottom, transparent calc(50% - .5px), rgba(0, 0, 0, .55) calc(50% - .5px), rgba(0, 0, 0, .55) calc(50% + .5px), transparent calc(50% + .5px));
+    box-shadow: inset 0 0 0 1px var(--board-edge);
+  }
+  .route .arrow { color: var(--muted); font-size: 15px; }
+
+  .city { font: 700 23px/1.1 var(--display); overflow-wrap: anywhere; }
+  .country { font-size: 14px; color: var(--muted); }
+  .tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+  .tags:empty { display: none; }
+
+  .leg { display: grid; gap: 1px; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .leg-when { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
+  .lg {
+    min-width: 2.6em;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .leg-when b { font-weight: 600; }
+  .leg-when .t { font-family: var(--mono); font-size: 13px; }
+  .leg-when sup { font-size: 10px; color: var(--deal); margin-left: 1px; }
+  .meta { color: var(--muted); font-size: 13.5px; overflow-wrap: anywhere; }
+  .meta .direct { color: var(--ink); font-weight: 600; }
+  .bag { color: var(--muted); font-size: 13px; }
+
+  .amount { font: 700 32px/1 var(--display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .per { font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .book {
+    margin-top: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .book:hover { text-decoration: underline; }
+
+  .list-note { margin: 8px 2px 0; font-size: 13px; color: var(--muted); }
+
+  .sk-row { display: grid; grid-template-columns: 10rem 1fr 1.3fr 4.5rem; gap: 22px; padding: 20px 18px; border-top: 1px solid var(--line); }
+  .sk-row:first-child { border-top: 0; }
+  .sk {
+    height: 12px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, var(--surface-2), var(--line), var(--surface-2));
+    background-size: 200% 100%;
+    animation: shimmer 1.3s linear infinite;
+  }
+  .sk.tall { height: 22px; }
+  @keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+  @container (max-width: 720px) {
+    .sk-row { grid-template-columns: 1fr 4rem; }
+    .sk-row .sk:nth-child(3) { display: none; }
+  }
+
+  .empty { padding: 28px 20px; text-align: center; color: var(--muted); }
+  .empty b { display: block; margin-bottom: 4px; color: var(--ink); font-size: 17px; }
+
+  .fine { margin: 4px 0 0; font-size: 13px; color: var(--muted); max-width: 72ch; }
+
+  @media (max-width: 880px) {
+    .layout { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+    .panel { position: static; max-height: none; overflow: visible; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pulse.busy, .sk { animation: none; }
+    .chev, .switch input, .switch input::after { transition: none; }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Live-Preise von Kiwi.com</p>
+    <h1 id="h1">Abflug Graz</h1>
+    <p class="lede" id="lede">Alle Ziele ab Graz mit aktuellen Preisen, günstigste zuerst. Die Seite fragt die Preise bei jedem Öffnen neu ab.</p>
+  </header>
+
+  <div class="layout">
+    <details class="panel" id="filters" open>
+      <summary>
+        <span class="sum-title">Suche anpassen</span>
+        <span class="sum-text" id="sumText"></span>
+        <span class="chev" aria-hidden="true"></span>
+      </summary>
+      <div class="panel-body">
+        <fieldset>
+          <legend class="label">Abflughafen</legend>
+          <div class="group">
+            <div class="seg">
+              <input type="radio" name="origin" id="o-grz" value="GRZ"><label for="o-grz"><span class="dot grz"></span>Graz</label>
+              <input type="radio" name="origin" id="o-vie" value="VIE"><label for="o-vie"><span class="dot vie"></span>Wien</label>
+              <input type="radio" name="origin" id="o-both" value="BOTH"><label for="o-both">Beide</label>
+            </div>
+            <p class="hint" id="originHint"></p>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend class="label">Reise</legend>
+          <div class="seg">
+            <input type="radio" name="trip" id="t-one" value="oneway"><label for="t-one">Nur Hinflug</label>
+            <input type="radio" name="trip" id="t-ret" value="return"><label for="t-ret">Hin &amp; Rück</label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend class="label">Reisedaten</legend>
+          <div class="seg">
+            <input type="radio" name="dmode" id="d-range" value="range"><label for="d-range">Zeitraum</label>
+            <input type="radio" name="dmode" id="d-fixed" value="fixed"><label for="d-fixed">Feste Daten</label>
+          </div>
+
+          <div class="sub" id="rangeBox">
+            <div class="row2">
+              <label class="field" for="rangeFrom">Abflug ab<input type="date" id="rangeFrom"></label>
+              <label class="field" for="rangeTo">Abflug bis<input type="date" id="rangeTo"></label>
+            </div>
+            <div class="chips" id="presets">
+              <button type="button" class="chip" data-months="1">1 Monat</button>
+              <button type="button" class="chip" data-months="3">3 Monate</button>
+              <button type="button" class="chip" data-months="6">6 Monate</button>
+            </div>
+            <div class="nights" id="nightsBox">
+              <span>Aufenthalt vor Ort</span>
+              <div class="row2">
+                <label class="field" for="nightsMin">ab Nächte<input type="number" id="nightsMin" min="1" max="60" step="1" inputmode="numeric"></label>
+                <label class="field" for="nightsMax">bis Nächte<input type="number" id="nightsMax" min="1" max="60" step="1" inputmode="numeric"></label>
+              </div>
+            </div>
+          </div>
+
+          <div class="sub" id="fixedBox" hidden>
+            <div class="row2">
+              <label class="field" for="depDate">Hinflug<input type="date" id="depDate"></label>
+              <label class="field" for="retDate" id="retField">Rückflug<input type="date" id="retDate"></label>
+            </div>
+            <div class="field">
+              <span id="flexLabel">Flexibel um</span>
+              <div class="seg seg-sm" role="radiogroup" aria-labelledby="flexLabel">
+                <input type="radio" name="flex" id="f0" value="0"><label for="f0">genau</label>
+                <input type="radio" name="flex" id="f1" value="1"><label for="f1">±1 Tag</label>
+                <input type="radio" name="flex" id="f2" value="2"><label for="f2">±2</label>
+                <input type="radio" name="flex" id="f3" value="3"><label for="f3">±3</label>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="group">
+          <div class="budget-head">
+            <label class="label" for="budget">Budget · <span id="budgetScope">pro Flug</span></label>
+            <output class="budget-val" id="budgetOut" for="budget">Kein Limit</output>
+          </div>
+          <input type="range" id="budget" min="20" max="1000" step="10">
+          <div class="scale"><span>€ 20</span><span>Kein Limit</span></div>
+        </div>
+
+        <div class="group toggles">
+          <label class="switch" for="direct">Nur Direktflüge<input type="checkbox" id="direct" role="switch"></label>
+          <label class="switch" for="perCity">Nur günstigstes Angebot pro Ziel<input type="checkbox" id="perCity" role="switch"></label>
+        </div>
+      </div>
+    </details>
+
+    <main class="results">
+      <div class="status" id="status" aria-live="polite"></div>
+      <div id="notices"></div>
+      <section class="tiles" id="tiles" aria-label="Überblick"></section>
+      <section id="compare" hidden></section>
+      <section id="listSec"></section>
+      <p class="fine">Preise für 1 Erwachsenen in Euro, wie Kiwi.com sie beim Abruf meldet. Bei Hin &amp; Rück ist es der Gesamtpreis für beide Flüge. Endpreis und Gepäck bei der Buchung prüfen.</p>
+    </main>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const SERVER = "Kiwi.com";
+  const TOOL = "search-flight";
+  const AIRPORTS = {
+    GRZ: { city: "Graz", cls: "grz" },
+    VIE: { city: "Wien", cls: "vie" },
+  };
+  const DAY = 86400000;
+  const BUDGET_MAX = 1000;       // slider top = no limit
+  const PAGE = 50;               // flights shown before "Weitere anzeigen"
+  const STORE_KEY = "flugsuche-graz-wien:v1";
+
+  // ---------- helpers ----------
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const pad = (n) => String(n).padStart(2, "0");
+
+  // Date-only math on UTC midnights so DST never shifts a day.
+  function todayISO() { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
+  function toUTC(iso) { const [y, m, d] = iso.split("-").map(Number); return Date.UTC(y, m - 1, d); }
+  function fromUTC(t) { const d = new Date(t); return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`; }
+  function addDays(iso, n) { return fromUTC(toUTC(iso) + n * DAY); }
+  function addMonths(iso, n) {
+    const [y, m, d] = iso.split("-").map(Number);
+    const last = new Date(Date.UTC(y, m - 1 + n + 1, 0)).getUTCDate();
+    return fromUTC(Date.UTC(y, m - 1 + n, Math.min(d, last)));
+  }
+  function daysBetween(a, b) { return Math.round((toUTC(b) - toUTC(a)) / DAY); }
+  function validISO(s) { return /^\d{4}-\d{2}-\d{2}$/.test(s || "") && !Number.isNaN(toUTC(s)); }
+  function kiwiDate(iso) { const [y, m, d] = iso.split("-"); return `${d}/${m}/${y}`; }
+
+  const fmtDay = new Intl.DateTimeFormat("de-AT", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+  const fmtShort = new Intl.DateTimeFormat("de-AT", { day: "numeric", month: "short", timeZone: "UTC" });
+  const fmtClock = new Intl.DateTimeFormat("de-AT", { hour: "2-digit", minute: "2-digit" });
+  const fmtStamp = new Intl.DateTimeFormat("de-AT", { day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" });
+  const eur = new Intl.NumberFormat("de-AT", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+
+  // Kiwi times are local airport times without an offset ("2026-10-29T15:30:00").
+  function parseLocal(ts) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(ts || "");
+    if (!m) return null;
+    return { t: Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]), date: `${m[1]}-${m[2]}-${m[3]}`, time: `${m[4]}:${m[5]}` };
+  }
+  const dayLabel = (p) => fmtDay.format(new Date(p.t));
+  const shortDate = (iso) => fmtShort.format(new Date(toUTC(iso)));
+  function fmtDur(s) {
+    if (!s) return "";
+    const h = Math.floor(s / 3600), m = Math.round((s % 3600) / 60);
+    return h ? `${h} h${m ? ` ${m} min` : ""}` : `${m} min`;
+  }
+  function fmtStand(t) {
+    const d = new Date(t), now = new Date();
+    return d.toDateString() === now.toDateString() ? `heute ${fmtClock.format(d)}` : fmtStamp.format(d);
+  }
+  function safeUrl(s) {
+    try { const u = new URL(String(s)); return u.protocol === "https:" ? u.href : ""; } catch { return ""; }
+  }
+
+  // ---------- state ----------
+  const today = todayISO();
+  const state = {
+    origin: "GRZ",
+    trip: "oneway",
+    dateMode: "range",
+    rangeFrom: today,
+    rangeTo: addMonths(today, 3),   // default: the next three months, on every open
+    nightsMin: 3,
+    nightsMax: 10,
+    depDate: addDays(today, 14),
+    retDate: addDays(today, 21),
+    flex: 0,
+    budget: 0,                      // 0 = no limit
+    directOnly: false,
+    perCity: false,
+    shown: PAGE,
+    cmpAll: false,
+  };
+
+  // Remembered per viewer: choices, never dates (the window always restarts at the next 3 months).
+  try {
+    const s = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
+    if (s && typeof s === "object") {
+      if (["GRZ", "VIE", "BOTH"].includes(s.origin)) state.origin = s.origin;
+      if (["oneway", "return"].includes(s.trip)) state.trip = s.trip;
+      if (Number.isInteger(s.nightsMin) && s.nightsMin >= 1 && s.nightsMin <= 60) state.nightsMin = s.nightsMin;
+      if (Number.isInteger(s.nightsMax) && s.nightsMax >= state.nightsMin && s.nightsMax <= 60) state.nightsMax = s.nightsMax;
+      if ([0, 1, 2, 3].includes(s.flex)) state.flex = s.flex;
+      if (Number.isFinite(s.budget) && s.budget >= 0 && s.budget < BUDGET_MAX) state.budget = s.budget;
+      state.directOnly = s.directOnly === true;
+      state.perCity = s.perCity === true;
+    }
+  } catch { /* storage unavailable: defaults */ }
+
+  function persist() {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify({
+        origin: state.origin, trip: state.trip, nightsMin: state.nightsMin, nightsMax: state.nightsMax,
+        flex: state.flex, budget: state.budget, directOnly: state.directOnly, perCity: state.perCity,
+      }));
+    } catch { /* ignore */ }
+  }
+
+  // ---------- search plan ----------
+  // Kiwi returns at most 15 itineraries per call, so a long window is split
+  // into monthly slices (max 6) and every slice asks for the cheapest flight per city.
+  function buildPlan() {
+    const ret = state.trip === "return";
+    const origins = state.origin === "BOTH" ? ["GRZ", "VIE"] : [state.origin];
+    const windows = [];
+
+    if (state.dateMode === "range") {
+      const from = state.rangeFrom, to = state.rangeTo;
+      if (!validISO(from) || !validISO(to)) return { error: "Gib ein Start- und ein Enddatum für den Zeitraum an." };
+      if (from < today) return { error: "Der Zeitraum beginnt in der Vergangenheit. Wähle ein Startdatum ab heute." };
+      if (to < from) return { error: "Das Enddatum liegt vor dem Startdatum." };
+      if (daysBetween(from, to) > 366) return { error: "Der Zeitraum darf höchstens ein Jahr lang sein." };
+      if (ret && !(state.nightsMin >= 1 && state.nightsMax >= state.nightsMin)) {
+        return { error: "Die Aufenthaltsdauer passt nicht: „bis“ muss mindestens so groß sein wie „ab“." };
+      }
+      const days = daysBetween(from, to) + 1;
+      const slices = Math.min(6, Math.ceil(days / 31));
+      const size = Math.ceil(days / slices);
+      for (let i = 0; i < slices; i++) {
+        const a = addDays(from, i * size);
+        if (a > to) break;
+        let b = addDays(a, size - 1);
+        if (b > to) b = to;
+        const w = { departureDate: kiwiDate(a), departureDateTo: kiwiDate(b) };
+        if (ret) { w.nights_in_dst_from = state.nightsMin; w.nights_in_dst_to = state.nightsMax; }
+        windows.push(w);
+      }
+    } else {
+      if (!validISO(state.depDate)) return { error: "Wähle ein Hinflugdatum." };
+      if (state.depDate < today) return { error: "Das Hinflugdatum liegt in der Vergangenheit." };
+      const w = { departureDate: kiwiDate(state.depDate) };
+      if (state.flex) w.departureDateFlexDays = state.flex;
+      if (ret) {
+        if (!validISO(state.retDate)) return { error: "Wähle ein Rückflugdatum." };
+        if (state.retDate < state.depDate) return { error: "Der Rückflug liegt vor dem Hinflug." };
+        w.returnDate = kiwiDate(state.retDate);
+        if (state.flex) w.returnDateFlexDays = state.flex;
+      }
+      windows.push(w);
+    }
+
+    const queries = [];
+    for (const w of windows) {
+      for (const origin of origins) {
+        const input = { flyFrom: origin, flyTo: "anywhere", ...w, one_for_city: true, sort: "price", currency: "EUR", locale: "de" };
+        if (state.directOnly) input.max_sector_stopovers = 0;
+        queries.push({ origin, input });
+      }
+    }
+    return { queries };
+  }
+
+  // ---------- normalising Kiwi itineraries ----------
+  function leg(l) {
+    if (!l || !Array.isArray(l.segments) || !l.segments.length) return null;
+    const segs = l.segments, first = segs[0], last = segs[segs.length - 1];
+    const dep = parseLocal(l.departureTime || first.departureTime);
+    const arr = parseLocal(l.arrivalTime || last.arrivalTime);
+    if (!dep || !arr) return null;
+    const route = Array.isArray(l.route) && l.route.length ? l.route : [first.from, ...segs.map((s) => s.to)];
+    return {
+      from: l.from || first.from,
+      to: l.to || last.to,
+      fromCity: first.fromCity || "",
+      toCity: last.toCity || "",
+      toCountry: last.toCountry || "",
+      dep, arr,
+      dur: Number(l.durationSeconds) || 0,
+      stops: Number.isFinite(l.stops) ? l.stops : segs.length - 1,
+      via: route.slice(1, -1),
+      carriers: [...new Set(segs.map((s) => s.carrierName || s.carrier).filter(Boolean))],
+    };
+  }
+
+  function normalize(it, origin) {
+    if (!it) return null;
+    const price = Number(it.price);
+    const out = leg(it.outbound);
+    if (!out || !Number.isFinite(price)) return null;
+    const inb = it.inbound ? leg(it.inbound) : null;
+    if (it.inbound && !inb) return null;
+    // Round trips must come back from the same city to the home airport's city;
+    // Kiwi sometimes offers open-jaw combos (out to Istanbul, back from Antalya).
+    let openJaw = false;
+    if (inb) {
+      const sameDest = inb.fromCity && out.toCity ? inb.fromCity === out.toCity : inb.from === out.to;
+      const home = inb.toCity && out.fromCity ? inb.toCity === out.fromCity : inb.to === out.from;
+      openJaw = !(sameDest && home);
+    }
+    return {
+      id: String(it.id || `${out.from}-${out.to}-${out.dep.t}-${price}`),
+      origin, price, out, inb, openJaw,
+      url: safeUrl(it.bookingUrl),
+      destCode: out.to,
+      destCity: out.toCity || out.to,
+      destCountry: out.toCountry,
+      bag: it.baggage || null,
+    };
+  }
+
+  // ---------- live data via the viewer's Kiwi.com connector ----------
+  let mcp = null;
+  let mcpState = "pending";   // pending | ready | none
+  let gen = 0;
+  let runs = [];
+  let planError = null;
+  let halted = false;
+  let debounce = 0;
+
+  const DENIED = new Set(["needs_reauth", "server_not_connected", "selection_required", "server_not_found",
+    "not_in_manifest", "blocked_by_policy", "approval_required", "consent_required"]);
+  const NO_MCP = new Set(["not_granted", "capability_disabled", "capability_removed"]);
+
+  // Watch = replay the last result instantly, then always fetch fresh (staleTime 0).
+  function watchQuery(input, onEvent) {
+    let closed = false, unsub = null, gotData = false;
+    const once = () => {
+      mcp.callTool(SERVER, TOOL, input, { cache: false }).then(
+        (res) => { if (!closed) onEvent({ type: "data", result: res }); },
+        (err) => { if (!closed) onEvent({ type: "error", error: err }); },
+      );
+    };
+    try {
+      unsub = mcp.watchTool(SERVER, TOOL, input, (ev) => {
+        if (closed) return;
+        if (ev.type === "data") gotData = true;
+        else if (!gotData && ev.error && ev.error.code === "bad_request") {
+          // This viewer can't watch the tool: fall back to a single fresh call.
+          if (unsub) unsub();
+          unsub = null;
+          once();
+          return;
+        }
+        onEvent(ev);
+      }, { cache: { staleTime: 0, gcTime: DAY } });
+    } catch {
+      once();
+    }
+    return () => { closed = true; if (unsub) unsub(); };
+  }
+
+  function startSearch() {
+    clearTimeout(debounce);
+    gen += 1;
+    const my = gen;
+    runs.forEach((r) => r.stop && r.stop());
+    const plan = buildPlan();
+    planError = plan.error || null;
+    state.shown = PAGE;
+    runs = planError ? [] : plan.queries.map((q) => ({
+      ...q, status: "idle", items: [], error: null, storedAt: 0, revalidating: false, retried: false, stop: null,
+    }));
+
+    if (mcpState === "ready" && !halted && runs.length) {
+      const begin = (r, next) => {
+        r.status = "loading";
+        let first = true;
+        r.stop = watchQuery(r.input, (ev) => {
+          if (my !== gen) return;
+          onRunEvent(r, ev, my);
+          if (first) { first = false; if (next) next(); }
+          render();
+        });
+      };
+      // First call alone, so the viewer sees at most one Kiwi.com consent prompt.
+      begin(runs[0], () => runs.slice(1).forEach((r) => begin(r)));
+    }
+    render();
+  }
+
+  function scheduleSearch(ms) {
+    clearTimeout(debounce);
+    debounce = setTimeout(startSearch, ms);
+  }
+
+  function onRunEvent(r, ev, my) {
+    if (ev.type === "data") {
+      const res = ev.result || {};
+      const p = res.payload;
+      if (!p || typeof p !== "object" || !Array.isArray(p.itineraries) || (p.error && !p.itineraries.length)) {
+        const msg = p && p.error ? String(p.error) : "Kiwi.com hat eine unerwartete Antwort geliefert.";
+        r.status = r.items.length ? "stale" : "error";
+        r.error = { code: "tool_error", message: msg };
+        return;
+      }
+      r.items = p.itineraries.map((it) => normalize(it, r.origin)).filter(Boolean);
+      r.status = "ok";
+      r.error = null;
+      r.storedAt = res.cache && res.cache.storedAt ? res.cache.storedAt : Date.now();
+      r.revalidating = !!(res.cache && res.cache.revalidating);
+      return;
+    }
+
+    const e = ev.error || { code: "upstream_error", message: "" };
+    if (e.code === "cancelled") return;
+    r.revalidating = false;
+    if (e.code === "user_changed") {
+      halted = true;
+      runs.forEach((x) => { x.items = []; if (x.stop) x.stop(); x.status = "error"; x.error = e; });
+      return;
+    }
+    if (NO_MCP.has(e.code)) {
+      mcpState = "none";
+      runs.forEach((x) => { if (x.stop) x.stop(); });
+      return;
+    }
+    if (DENIED.has(e.code)) r.items = [];
+    if (e.retryable && !r.retried) {
+      // One quiet retry per search, for reads only.
+      r.retried = true;
+      r.status = "loading";
+      const wait = Math.min(60000, e.retryAfterMs || 0) + 700 + Math.random() * 1300;
+      setTimeout(() => {
+        if (my !== gen) return;
+        mcp.callTool(SERVER, TOOL, r.input, { cache: { staleTime: 0, gcTime: DAY } })
+          .then((res) => ({ type: "data", result: res }), (err) => ({ type: "error", error: err }))
+          .then((ev2) => { if (my !== gen) return; onRunEvent(r, ev2, my); render(); });
+      }, wait);
+      return;
+    }
+    r.status = r.items.length ? "stale" : "error";
+    r.error = e;
+  }
+
+  function errText(e) {
+    switch (e && e.code) {
+      case "needs_reauth":
+        return { t: "Kiwi.com neu verbinden", b: "Die Verbindung zu Kiwi.com ist abgelaufen. Verbinde Kiwi.com in claude.ai unter Einstellungen → Connectors neu und lade die Seite dann neu." };
+      case "server_not_connected":
+      case "server_not_found":
+        return { t: "Kiwi.com ist nicht verbunden", b: "Füge Kiwi.com in claude.ai unter Einstellungen → Connectors hinzu und lade die Seite dann neu." };
+      case "selection_required":
+        return { t: "Kiwi.com-Verbindung auswählen", b: "Du hast mehr als eine Kiwi.com-Verbindung. Wähle in der Abfrage von Claude eine aus und lade die Seite dann neu." };
+      case "not_in_manifest":
+      case "consent_required":
+        return { t: "Kiwi.com ist für diese Seite nicht freigegeben", b: "Ohne Freigabe kann die Seite keine Preise abrufen. Tippe auf „Erneut versuchen“ und erlaube Kiwi.com.", retry: true };
+      case "blocked_by_policy":
+      case "approval_required":
+        return { t: "Von deiner Organisation gesperrt", b: "Deine Organisation erlaubt diese Kiwi.com-Abfrage hier nicht." };
+      case "tool_error":
+        return { t: "Kiwi.com meldet einen Fehler", b: e.message || "Die Suche konnte nicht ausgeführt werden.", retry: true };
+      case "user_changed":
+        return { t: "Konto gewechselt", b: "Du bist jetzt mit einem anderen Konto angemeldet. Claude lädt die Seite neu." };
+      case "server_unavailable":
+      case "rate_limited":
+        return { t: "Kiwi.com antwortet gerade nicht", b: "Versuch es in ein paar Minuten mit „Neu laden“ noch einmal.", retry: true };
+      default:
+        return { t: "Abfrage fehlgeschlagen", b: "Kiwi.com hat nicht geantwortet. Versuch es mit „Neu laden“ noch einmal.", retry: true };
+    }
+  }
+
+  // ---------- derived view ----------
+  function view() {
+    const ret = state.trip === "return";
+    const seen = new Set();
+    const all = [];
+    for (const r of runs) {
+      for (const it of r.items) {
+        const k = `${it.origin}|${it.id}`;
+        if (!seen.has(k)) { seen.add(k); all.push(it); }
+      }
+    }
+    let openJaw = 0;
+    let items = all.filter((it) => {
+      if (!!it.inb !== ret) return false;
+      if (it.openJaw) { openJaw += 1; return false; }
+      return true;
+    });
+    if (state.directOnly) items = items.filter((it) => it.out.stops === 0 && (!it.inb || it.inb.stops === 0));
+    const beforeBudget = items.length;
+    if (state.budget) items = items.filter((it) => it.price <= state.budget);
+    items.sort((a, b) => a.price - b.price || a.out.dep.t - b.out.dep.t);
+    let list = items;
+    if (state.perCity) {
+      const s = new Set();
+      list = items.filter((it) => (s.has(it.destCity) ? false : (s.add(it.destCity), true)));
+    }
+    return { items, list, openJaw, overBudget: beforeBudget - items.length };
+  }
+
+  // ---------- rendering ----------
+  const flap = (code) => `<span class="code">${[...String(code || "???").slice(0, 3)].map((c) => `<i>${esc(c)}</i>`).join("")}</span>`;
+  const originPill = (o) => `<span class="pill ${AIRPORTS[o].cls}">ab ${AIRPORTS[o].city}</span>`;
+
+  function stopText(l) {
+    if (l.stops === 0) return '<span class="direct">Direkt</span>';
+    const via = l.via.length ? ` in ${l.via.join(", ")}` : "";
+    return esc(`${l.stops} ${l.stops === 1 ? "Stopp" : "Stopps"}${via}`);
+  }
+  function bagText(b) {
+    if (!b) return "";
+    if (b.checkedBag > 0) return "inkl. Aufgabegepäck";
+    if (b.cabinBag > 0) return "inkl. Handgepäck";
+    if (b.personalItem > 0) return "nur kleines Gepäckstück";
+    return "";
+  }
+  function legHTML(label, l) {
+    const plus = daysBetween(l.dep.date, l.arr.date);
+    const bits = [stopText(l), esc(fmtDur(l.dur)), esc(l.carriers.join(" / "))].filter(Boolean);
+    return `<div class="leg">
+      <div class="leg-when"><span class="lg">${label}</span><b>${esc(dayLabel(l.dep))}</b><span class="t">${esc(l.dep.time)} → ${esc(l.arr.time)}${plus > 0 ? `<sup>+${plus}</sup>` : ""}</span></div>
+      <div class="meta">${bits.join(" · ")}</div>
+    </div>`;
+  }
+  function flightHTML(it, isCheapest) {
+    const ret = !!it.inb;
+    const tags = [];
+    if (isCheapest) tags.push('<span class="pill deal">Günstigster</span>');
+    if (state.origin === "BOTH") tags.push(originPill(it.origin));
+    const bag = bagText(it.bag);
+    return `<li class="flight">
+      <div class="route" aria-label="${esc(it.out.from)} nach ${esc(it.destCode)}">${flap(it.out.from)}<span class="arrow" aria-hidden="true">→</span>${flap(it.destCode)}</div>
+      <div class="dest">
+        <div class="city">${esc(it.destCity)}</div>
+        <div class="country">${esc(it.destCountry)}</div>
+        <div class="tags">${tags.join("")}</div>
+      </div>
+      <div class="when">
+        ${legHTML("Hin", it.out)}
+        ${ret ? legHTML("Rück", it.inb) : ""}
+        ${bag ? `<div class="bag">${bag}</div>` : ""}
+      </div>
+      <div class="price">
+        <div class="amount">${esc(eur.format(it.price))}</div>
+        <div class="per">${ret ? "Hin + Rück gesamt" : "pro Person"}</div>
+        ${it.url ? `<a class="book" href="${esc(it.url)}" target="_blank" rel="noopener noreferrer">Bei Kiwi.com ansehen ↗</a>` : ""}
+      </div>
+    </li>`;
+  }
+  function skeleton(n) {
+    let rows = "";
+    for (let i = 0; i < n; i++) {
+      rows += `<li class="sk-row" aria-hidden="true"><div class="sk tall"></div><div class="sk"></div><div class="sk"></div><div class="sk tall"></div></li>`;
+    }
+    return `<ol class="list">${rows}</ol>`;
+  }
+
+  function dateSummary() {
+    if (state.dateMode === "range") {
+      const n = [1, 3, 6].find((m) => state.rangeFrom === today && state.rangeTo === addMonths(today, m));
+      const span = n ? (n === 1 ? "nächster Monat" : `nächste ${n} Monate`) : `${shortDate(state.rangeFrom)} – ${shortDate(state.rangeTo)}`;
+      return state.trip === "return" ? `${span}, ${state.nightsMin}–${state.nightsMax} Nächte` : span;
+    }
+    const flex = state.flex ? ` (±${state.flex})` : "";
+    return state.trip === "return" ? `${shortDate(state.depDate)} – ${shortDate(state.retDate)}${flex}` : `${shortDate(state.depDate)}${flex}`;
+  }
+
+  function renderHeader() {
+    const o = state.origin;
+    $("h1").innerHTML = o === "BOTH" ? 'Abflug Graz <span class="amp">&amp;</span> Wien' : `Abflug ${AIRPORTS[o].city}`;
+    const where = o === "BOTH" ? "Graz und Wien" : AIRPORTS[o].city;
+    $("lede").textContent = `Alle Ziele ab ${where} mit aktuellen Preisen, günstigste zuerst. Die Seite fragt die Preise bei jedem Öffnen neu ab.`;
+  }
+
+  function renderStatus() {
+    const el = $("status");
+    if (mcpState === "pending") {
+      el.innerHTML = '<span class="live"><span class="pulse busy"></span>Verbinde mit Kiwi.com …</span>';
+      return;
+    }
+    if (mcpState === "none" || halted) {
+      el.innerHTML = '<span class="live"><span class="pulse off"></span>Keine Live-Verbindung</span>';
+      return;
+    }
+    if (planError || !runs.length) {
+      el.innerHTML = '<span class="live"><span class="pulse off"></span>Keine Suche aktiv</span>';
+      return;
+    }
+    const total = runs.length;
+    const pending = runs.filter((r) => r.status === "loading" || r.status === "idle" || r.revalidating).length;
+    const stamps = runs.filter((r) => r.storedAt).map((r) => r.storedAt);
+    const stand = stamps.length ? `Stand ${fmtStand(Math.min(...stamps))}` : "";
+    const left = pending
+      ? `<span class="pulse busy"></span>${stand ? `${esc(stand)} · ` : ""}Aktualisiere Preise … ${total - pending}/${total}`
+      : `<span class="pulse"></span>Live · ${esc(stand || "keine Daten")}`;
+    el.innerHTML = `<span class="live">${left}</span><button type="button" class="btn" data-action="reload"${pending ? " disabled" : ""}>Neu laden</button>`;
+  }
+
+  function renderNotices() {
+    const out = [];
+    if (mcpState === "none") {
+      out.push(`<div class="note info"><b>Live-Preise sind in dieser Ansicht nicht verfügbar</b>
+        <p>Öffne die Seite auf claude.ai und verbinde Kiwi.com unter Einstellungen → Connectors. Dann ruft sie die Flüge bei jedem Öffnen neu ab.</p></div>`);
+    } else if (planError) {
+      out.push(`<div class="note warn"><b>Suche angehalten</b><p>${esc(planError)}</p></div>`);
+    } else if (runs.length) {
+      const failed = runs.filter((r) => r.error && (r.status === "error" || r.status === "stale"));
+      const allFailed = failed.length === runs.length && runs.every((r) => !r.items.length);
+      if (allFailed) {
+        const codes = new Set(failed.map((r) => r.error.code));
+        const x = errText(codes.size === 1 ? failed[0].error : { code: "upstream_error" });
+        out.push(`<div class="note err"><b>${esc(x.t)}</b><p>${esc(x.b)}</p>${x.retry ? '<button type="button" class="btn primary" data-action="reload">Erneut versuchen</button>' : ""}</div>`);
+      } else if (failed.length) {
+        const byOrigin = new Map();
+        for (const r of failed) if (!byOrigin.has(r.origin)) byOrigin.set(r.origin, errText(r.error));
+        const parts = [...byOrigin].map(([o, x]) => `${state.origin === "BOTH" ? `Ab ${AIRPORTS[o].city}: ` : ""}${x.t}.`);
+        const msg = `${failed.length} von ${runs.length} Abfragen ohne aktuelle Antwort. ${parts.join(" ")}`;
+        out.push(`<div class="note warn"><p>${esc(msg)} Die übrigen Ergebnisse sind vollständig.</p></div>`);
+      }
+    }
+    $("notices").innerHTML = out.join("");
+  }
+
+  function bestBy(items, pred) { return items.find(pred) || null; }
+
+  function renderTiles(v) {
+    const el = $("tiles");
+    if (!v.items.length) { el.innerHTML = ""; return; }
+    const ret = state.trip === "return";
+    const sub = (it) => `${it.destCity} · ${dayLabel(it.out.dep)}`;
+    const tile = (k, it, emptyText) => `<div class="tile"><div class="k">${k}</div>${
+      it ? `<div class="v">${esc(eur.format(it.price))}</div><div class="s">${esc(sub(it))}</div>`
+         : `<div class="v none">–</div><div class="s">${esc(emptyText)}</div>`}</div>`;
+
+    if (state.origin === "BOTH") {
+      const rows = compareRows(v.items);
+      const both = rows.filter((r) => r.GRZ && r.VIE);
+      const grzWins = both.filter((r) => r.GRZ.price < r.VIE.price).length;
+      const vieWins = both.filter((r) => r.VIE.price < r.GRZ.price).length;
+      el.innerHTML = [
+        tile(`Günstigster ${originPill("GRZ")}`, bestBy(v.items, (i) => i.origin === "GRZ"), "Kein Flug ab Graz"),
+        tile(`Günstigster ${originPill("VIE")}`, bestBy(v.items, (i) => i.origin === "VIE"), "Kein Flug ab Wien"),
+        `<div class="tile"><div class="k">Gleiche Ziele</div><div class="v">${both.length}</div><div class="s">${
+          both.length ? `Graz günstiger: ${grzWins} · Wien günstiger: ${vieWins}` : "Keine Ziele ab beiden Flughäfen"}</div></div>`,
+      ].join("");
+      return;
+    }
+    const cities = new Set(v.items.map((i) => i.destCity)).size;
+    el.innerHTML = [
+      tile(ret ? "Günstigste Hin &amp; Rück" : "Günstigster Flug", v.items[0], ""),
+      tile("Günstigster Direktflug", bestBy(v.items, (i) => i.out.stops === 0 && (!i.inb || i.inb.stops === 0)), state.budget ? "Kein Direktflug im Budget" : "Kein Direktflug gefunden"),
+      `<div class="tile"><div class="k">Ziele</div><div class="v">${cities}</div><div class="s">${v.items.length} ${v.items.length === 1 ? "Angebot" : "Angebote"}</div></div>`,
+    ].join("");
+  }
+
+  function compareRows(items) {
+    const m = new Map();
+    for (const it of items) {
+      let r = m.get(it.destCity);
+      if (!r) m.set(it.destCity, (r = { city: it.destCity, country: it.destCountry, GRZ: null, VIE: null }));
+      if (!r[it.origin] || it.price < r[it.origin].price) r[it.origin] = it;
+    }
+    const low = (r) => Math.min(r.GRZ ? r.GRZ.price : Infinity, r.VIE ? r.VIE.price : Infinity);
+    return [...m.values()].sort((a, b) => low(a) - low(b));
+  }
+
+  function renderCompare(v) {
+    const el = $("compare");
+    if (state.origin !== "BOTH" || !v.items.length) { el.hidden = true; el.innerHTML = ""; return; }
+    const rows = compareRows(v.items);
+    const shown = state.cmpAll ? rows : rows.slice(0, 8);
+    const cell = (it, win) => it
+      ? `<td class="num${win ? ` win-${it.origin.toLowerCase()}` : ""}"><span class="p">${esc(eur.format(it.price))}</span><span class="d">${esc(dayLabel(it.out.dep))}</span></td>`
+      : '<td class="num"><span class="na">–</span></td>';
+    const body = shown.map((r) => {
+      let diff;
+      if (r.GRZ && r.VIE) {
+        const d = r.GRZ.price - r.VIE.price;
+        diff = d === 0 ? "gleich teuer"
+          : d < 0 ? `<span class="diff-grz">Graz ${esc(eur.format(-d))} günstiger</span>`
+          : `<span class="diff-vie">Wien ${esc(eur.format(d))} günstiger</span>`;
+      } else {
+        diff = `<span class="na">nur ab ${r.GRZ ? "Graz" : "Wien"}</span>`;
+      }
+      const grzWin = r.GRZ && (!r.VIE || r.GRZ.price < r.VIE.price);
+      const vieWin = r.VIE && (!r.GRZ || r.VIE.price < r.GRZ.price);
+      return `<tr><td><span class="city-cell">${esc(r.city)}</span><span class="d">${esc(r.country)}</span></td>${cell(r.GRZ, grzWin)}${cell(r.VIE, vieWin)}<td>${diff}</td></tr>`;
+    }).join("");
+    const more = rows.length > 8
+      ? `<div class="more-row"><button type="button" class="btn" data-action="cmp">${state.cmpAll ? "Weniger anzeigen" : `Alle ${rows.length} Ziele anzeigen`}</button></div>`
+      : "";
+    el.hidden = false;
+    el.innerHTML = `<div class="sec-head"><h2>Graz oder Wien?</h2><span class="aside">${state.trip === "return" ? "Gesamtpreis Hin + Rück" : "Günstigster Flug"} je Ziel</span></div>
+      <div class="cmp-wrap"><table>
+        <thead><tr><th>Ziel</th><th>ab Graz</th><th>ab Wien</th><th>Unterschied</th></tr></thead>
+        <tbody>${body}</tbody>
+      </table>${more}</div>`;
+  }
+
+  function renderList(v) {
+    const el = $("listSec");
+    const busy = mcpState === "pending" || runs.some((r) => r.status === "loading" || r.status === "idle");
+    const ret = state.trip === "return";
+    if (mcpState === "none" || planError || halted) { el.innerHTML = ""; return; }
+
+    const count = v.list.length;
+    const head = `<div class="sec-head"><h2>${count ? `${count} ${count === 1 ? "Flug" : "Flüge"}` : "Flüge"}${state.perCity && count ? " · 1 pro Ziel" : ""}</h2><span class="aside">${ret ? "Gesamtpreis Hin + Rück" : "Preis pro Flug"}, günstigste zuerst</span></div>`;
+
+    if (!count) {
+      if (busy) { el.innerHTML = head + skeleton(5); return; }
+      const failedAll = runs.length && runs.every((r) => r.status === "error");
+      if (failedAll) { el.innerHTML = ""; return; }
+      let msg;
+      if (state.budget && v.overBudget) msg = { t: `Kein Flug bis ${eur.format(state.budget)}`, b: "Erhöhe das Budget, um die nächstgünstigeren Angebote zu sehen." };
+      else if (state.directOnly) msg = { t: "Keine Direktflüge gefunden", b: "Schalte „Nur Direktflüge“ aus oder wähle einen anderen Zeitraum." };
+      else msg = { t: "Keine Flüge gefunden", b: "Wähle einen anderen Zeitraum oder andere Daten." };
+      el.innerHTML = `${head}<div class="list"><div class="empty"><b>${esc(msg.t)}</b>${esc(msg.b)}</div></div>`;
+      return;
+    }
+
+    const shown = v.list.slice(0, state.shown);
+    const cheapestId = v.list[0] && `${v.list[0].origin}|${v.list[0].id}`;
+    const rows = shown.map((it) => flightHTML(it, `${it.origin}|${it.id}` === cheapestId)).join("");
+    const notes = [];
+    if (busy) notes.push("Weitere Abfragen laufen noch.");
+    if (state.budget && v.overBudget) notes.push(`${v.overBudget} ${v.overBudget === 1 ? "Angebot" : "Angebote"} über ${eur.format(state.budget)} ausgeblendet.`);
+    if (v.openJaw) notes.push(`${v.openJaw} Gabelflüge (Rückflug ab einer anderen Stadt) ausgeblendet.`);
+    const rest = v.list.length - shown.length;
+    el.innerHTML = `${head}<ol class="list">${rows}</ol>${
+      rest > 0 ? `<div class="more-row"><button type="button" class="btn" data-action="more">Weitere ${Math.min(rest, PAGE)} von ${rest} anzeigen</button></div>` : ""}${
+      notes.length ? `<p class="list-note">${esc(notes.join(" "))}</p>` : ""}`;
+  }
+
+  function render() {
+    renderHeader();
+    renderStatus();
+    renderNotices();
+    const v = view();
+    renderTiles(v);
+    renderCompare(v);
+    renderList(v);
+  }
+
+  // ---------- controls ----------
+  function syncControls() {
+    const ret = state.trip === "return";
+    const range = state.dateMode === "range";
+    document.querySelectorAll('input[name="origin"]').forEach((el) => { el.checked = el.value === state.origin; });
+    document.querySelectorAll('input[name="trip"]').forEach((el) => { el.checked = el.value === state.trip; });
+    document.querySelectorAll('input[name="dmode"]').forEach((el) => { el.checked = el.value === state.dateMode; });
+    document.querySelectorAll('input[name="flex"]').forEach((el) => { el.checked = Number(el.value) === state.flex; });
+
+    $("originHint").textContent = state.origin === "BOTH"
+      ? "Vergleicht Graz und Wien für dieselben Ziele."
+      : state.origin === "GRZ" ? "Wien lässt sich dazuschalten." : "Graz lässt sich dazuschalten.";
+
+    $("rangeBox").hidden = !range;
+    $("fixedBox").hidden = range;
+    $("nightsBox").hidden = !(range && ret);
+    $("retField").hidden = !ret;
+
+    const maxDate = addMonths(today, 12);
+    $("rangeFrom").value = state.rangeFrom;
+    $("rangeFrom").min = today;
+    $("rangeFrom").max = maxDate;
+    $("rangeTo").value = state.rangeTo;
+    $("rangeTo").min = state.rangeFrom || today;
+    $("rangeTo").max = maxDate;
+    $("depDate").value = state.depDate;
+    $("depDate").min = today;
+    $("depDate").max = maxDate;
+    $("retDate").value = state.retDate;
+    $("retDate").min = state.depDate || today;
+    $("retDate").max = maxDate;
+    if (document.activeElement !== $("nightsMin")) $("nightsMin").value = state.nightsMin;
+    if (document.activeElement !== $("nightsMax")) $("nightsMax").value = state.nightsMax;
+
+    document.querySelectorAll("#presets .chip").forEach((b) => {
+      const n = Number(b.dataset.months);
+      b.setAttribute("aria-pressed", String(state.rangeFrom === today && state.rangeTo === addMonths(today, n)));
+    });
+
+    $("budget").value = state.budget || BUDGET_MAX;
+    $("budgetOut").textContent = state.budget ? `bis ${eur.format(state.budget)}` : "Kein Limit";
+    $("budgetScope").textContent = ret ? "Hin + Rück" : "pro Flug";
+    $("direct").checked = state.directOnly;
+    $("perCity").checked = state.perCity;
+
+    const originText = state.origin === "BOTH" ? "Graz + Wien" : AIRPORTS[state.origin].city;
+    const parts = [originText, ret ? "Hin & Rück" : "Nur Hinflug", dateSummary(),
+      state.budget ? `bis ${eur.format(state.budget)}` : "kein Limit"];
+    if (state.directOnly) parts.push("direkt");
+    $("sumText").textContent = parts.join(" · ");
+  }
+
+  // Search-relevant change: remember, redraw controls, fetch again.
+  function changed(delay) {
+    persist();
+    syncControls();
+    if (delay) scheduleSearch(delay); else startSearch();
+  }
+
+  function bind() {
+    document.querySelectorAll('input[name="origin"]').forEach((el) => el.addEventListener("change", () => {
+      state.origin = el.value; state.cmpAll = false; changed(0);
+    }));
+    document.querySelectorAll('input[name="trip"]').forEach((el) => el.addEventListener("change", () => {
+      state.trip = el.value;
+      if (state.retDate < state.depDate) state.retDate = addDays(state.depDate, 7);
+      changed(0);
+    }));
+    document.querySelectorAll('input[name="dmode"]').forEach((el) => el.addEventListener("change", () => {
+      state.dateMode = el.value; changed(0);
+    }));
+    document.querySelectorAll('input[name="flex"]').forEach((el) => el.addEventListener("change", () => {
+      state.flex = Number(el.value); changed(0);
+    }));
+
+    $("rangeFrom").addEventListener("change", (e) => {
+      state.rangeFrom = e.target.value;
+      if (validISO(state.rangeFrom) && validISO(state.rangeTo) && state.rangeTo < state.rangeFrom) state.rangeTo = addMonths(state.rangeFrom, 1);
+      changed(400);
+    });
+    $("rangeTo").addEventListener("change", (e) => { state.rangeTo = e.target.value; changed(400); });
+    $("depDate").addEventListener("change", (e) => {
+      state.depDate = e.target.value;
+      if (validISO(state.depDate) && (!validISO(state.retDate) || state.retDate < state.depDate)) state.retDate = addDays(state.depDate, 7);
+      changed(400);
+    });
+    $("retDate").addEventListener("change", (e) => { state.retDate = e.target.value; changed(400); });
+
+    const nights = (id, key) => $(id).addEventListener("input", (e) => {
+      const n = parseInt(e.target.value, 10);
+      if (!Number.isInteger(n)) return;
+      state[key] = Math.max(1, Math.min(60, n));
+      changed(700);
+    });
+    nights("nightsMin", "nightsMin");
+    nights("nightsMax", "nightsMax");
+
+    $("presets").addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-months]");
+      if (!b) return;
+      state.rangeFrom = today;
+      state.rangeTo = addMonths(today, Number(b.dataset.months));
+      changed(0);
+    });
+
+    // Budget and "one per destination" only filter what is already loaded.
+    $("budget").addEventListener("input", (e) => {
+      const n = Number(e.target.value);
+      state.budget = n >= BUDGET_MAX ? 0 : n;
+      state.shown = PAGE;
+      persist(); syncControls(); render();
+    });
+    $("perCity").addEventListener("change", (e) => {
+      state.perCity = e.target.checked; state.shown = PAGE;
+      persist(); syncControls(); render();
+    });
+    // Direct-only goes to Kiwi, so the 15 results per slice are all non-stop.
+    $("direct").addEventListener("change", (e) => { state.directOnly = e.target.checked; changed(0); });
+
+    document.querySelector(".results").addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-action]");
+      if (!b) return;
+      const a = b.dataset.action;
+      if (a === "reload") startSearch();
+      else if (a === "more") { state.shown += PAGE; render(); }
+      else if (a === "cmp") { state.cmpAll = !state.cmpAll; render(); }
+    });
+  }
+
+  // ---------- boot ----------
+  if (window.matchMedia && window.matchMedia("(max-width: 880px)").matches) $("filters").open = false;
+  bind();
+  syncControls();
+  render();
+
+  const c = window.claude;
+  if (!c || typeof c.use !== "function") {
+    mcpState = "none";
+    render();
+  } else {
+    c.use("mcp").then((ns) => {
+      mcp = ns;
+      mcpState = ns ? "ready" : "none";
+      startSearch();   // every open fetches fresh prices
+    }, () => { mcpState = "none"; render(); });
+  }
+})();
+</script>
