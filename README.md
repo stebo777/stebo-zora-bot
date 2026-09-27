@@ -14,7 +14,7 @@
 
 Das Kiwi.com-Tool `search-flight` liefert höchstens 15 Treffer pro Anfrage. Deshalb teilt die Seite den Zeitraum in Monatsabschnitte (höchstens 6) und fragt pro Abschnitt und Flughafen `flyTo: "anywhere"` mit `one_for_city: true` ab. Die Ergebnisse werden zusammengeführt und nach Preis sortiert.
 
-Gabelflüge, bei denen der Rückflug in einer anderen Stadt startet oder woanders landet, werden bei Hin & Rück ausgeblendet. Budget und „günstigstes pro Ziel“ filtern die geladenen Ergebnisse sofort. „Nur Direktflüge“ geht als `max_sector_stopovers: 0` direkt an Kiwi.com.
+Gabelflüge, bei denen der Rückflug in einer anderen Stadt startet oder woanders landet, bleiben in der Liste und sind markiert („Rückflug ab …“ / „Rückflug nach …“). Budget und „günstigstes pro Ziel“ filtern die geladenen Ergebnisse sofort. „Nur Direktflüge“ geht als `max_sector_stopovers: 0` direkt an Kiwi.com.
 
 ### Veröffentlichen
 

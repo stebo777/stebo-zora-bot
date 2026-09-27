@@ -368,6 +368,7 @@
   .pill.grz { background: var(--grz-soft); color: var(--grz); }
   .pill.vie { background: var(--vie-soft); color: var(--vie); }
   .pill.deal { background: var(--deal-soft); color: var(--deal); }
+  .pill.alt { background: var(--surface-2); color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); }
 
   h2 { margin: 0; font: 700 26px/1.1 var(--display); text-wrap: balance; }
   .sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; margin-bottom: 10px; }
@@ -799,17 +800,19 @@
     if (!out || !Number.isFinite(price)) return null;
     const inb = it.inbound ? leg(it.inbound) : null;
     if (it.inbound && !inb) return null;
-    // Round trips must come back from the same city to the home airport's city;
-    // Kiwi sometimes offers open-jaw combos (out to Istanbul, back from Antalya).
-    let openJaw = false;
+    // Kiwi also offers open-jaw round trips (out to Istanbul, back from Antalya,
+    // or home to Wien instead of Graz). They count like any other offer; the row
+    // only notes where the return flight differs.
+    let retFrom = "", retTo = "";
     if (inb) {
       const sameDest = inb.fromCity && out.toCity ? inb.fromCity === out.toCity : inb.from === out.to;
       const home = inb.toCity && out.fromCity ? inb.toCity === out.fromCity : inb.to === out.from;
-      openJaw = !(sameDest && home);
+      if (!sameDest) retFrom = inb.fromCity || inb.from;
+      if (!home) retTo = inb.toCity || inb.to;
     }
     return {
       id: String(it.id || `${out.from}-${out.to}-${out.dep.t}-${price}`),
-      origin, price, out, inb, openJaw,
+      origin, price, out, inb, retFrom, retTo,
       url: safeUrl(it.bookingUrl),
       destCode: out.to,
       destCity: out.toCity || out.to,
@@ -980,12 +983,7 @@
         if (!seen.has(k)) { seen.add(k); all.push(it); }
       }
     }
-    let openJaw = 0;
-    let items = all.filter((it) => {
-      if (!!it.inb !== ret) return false;
-      if (it.openJaw) { openJaw += 1; return false; }
-      return true;
-    });
+    let items = all.filter((it) => !!it.inb === ret);
     if (state.directOnly) items = items.filter((it) => it.out.stops === 0 && (!it.inb || it.inb.stops === 0));
     const beforeBudget = items.length;
     if (state.budget) items = items.filter((it) => it.price <= state.budget);
@@ -995,7 +993,7 @@
       const s = new Set();
       list = items.filter((it) => (s.has(it.destCity) ? false : (s.add(it.destCity), true)));
     }
-    return { items, list, openJaw, overBudget: beforeBudget - items.length };
+    return { items, list, overBudget: beforeBudget - items.length };
   }
 
   // ---------- rendering ----------
@@ -1014,9 +1012,9 @@
     if (b.personalItem > 0) return "nur kleines Gepäckstück";
     return "";
   }
-  function legHTML(label, l) {
+  function legHTML(label, l, showRoute) {
     const plus = daysBetween(l.dep.date, l.arr.date);
-    const bits = [stopText(l), esc(fmtDur(l.dur)), esc(l.carriers.join(" / "))].filter(Boolean);
+    const bits = [showRoute ? esc(`${l.from} → ${l.to}`) : "", stopText(l), esc(fmtDur(l.dur)), esc(l.carriers.join(" / "))].filter(Boolean);
     return `<div class="leg">
       <div class="leg-when"><span class="lg">${label}</span><b>${esc(dayLabel(l.dep))}</b><span class="t">${esc(l.dep.time)} → ${esc(l.arr.time)}${plus > 0 ? `<sup>+${plus}</sup>` : ""}</span></div>
       <div class="meta">${bits.join(" · ")}</div>
@@ -1027,6 +1025,8 @@
     const tags = [];
     if (isCheapest) tags.push('<span class="pill deal">Günstigster</span>');
     if (state.origin === "BOTH") tags.push(originPill(it.origin));
+    if (it.retFrom) tags.push(`<span class="pill alt">Rückflug ab ${esc(it.retFrom)}</span>`);
+    if (it.retTo) tags.push(`<span class="pill alt">Rückflug nach ${esc(it.retTo)}</span>`);
     const bag = bagText(it.bag);
     return `<li class="flight">
       <div class="route" aria-label="${esc(it.out.from)} nach ${esc(it.destCode)}">${flap(it.out.from)}<span class="arrow" aria-hidden="true">→</span>${flap(it.destCode)}</div>
@@ -1037,7 +1037,7 @@
       </div>
       <div class="when">
         ${legHTML("Hin", it.out)}
-        ${ret ? legHTML("Rück", it.inb) : ""}
+        ${ret ? legHTML("Rück", it.inb, !!(it.retFrom || it.retTo)) : ""}
         ${bag ? `<div class="bag">${bag}</div>` : ""}
       </div>
       <div class="price">
@@ -1224,7 +1224,6 @@
     const notes = [];
     if (busy) notes.push("Weitere Abfragen laufen noch.");
     if (state.budget && v.overBudget) notes.push(`${v.overBudget} ${v.overBudget === 1 ? "Angebot" : "Angebote"} über ${eur.format(state.budget)} ausgeblendet.`);
-    if (v.openJaw) notes.push(`${v.openJaw} Gabelflüge (Rückflug ab einer anderen Stadt) ausgeblendet.`);
     const rest = v.list.length - shown.length;
     el.innerHTML = `${head}<ol class="list">${rows}</ol>${
       rest > 0 ? `<div class="more-row"><button type="button" class="btn" data-action="more">Weitere ${Math.min(rest, PAGE)} von ${rest} anzeigen</button></div>` : ""}${
