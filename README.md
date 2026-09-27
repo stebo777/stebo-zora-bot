@@ -9,6 +9,7 @@
 - **Reisedaten:** ein Zeitraum (Standard: die nächsten drei Monate, bei Hin & Rück mit Aufenthaltsdauer in Nächten) oder feste Hin- und Rückflugdaten mit ±0–3 Tagen Flexibilität.
 - **Filter:** Budget, nur Direktflüge, nur das günstigste Angebot pro Ziel.
 - **Aktualität:** Bei jedem Öffnen werden Flüge und Preise neu abgerufen. „Neu laden“ holt sie jederzeit erneut.
+- **Google Flights vergleichen:** Jeder Flug hat einen Link, der dieselbe Strecke am selben Tag in Google Flights öffnet. Kiwi.com rechnet eigene Gebühren ein und führt nicht jeden Flug (vor allem kurz vor Abflug), Google zeigt oft den günstigeren Airline-Preis.
 
 ### Wie die Suche funktioniert
 

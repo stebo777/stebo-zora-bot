@@ -473,6 +473,7 @@
     white-space: nowrap;
   }
   .book:hover { text-decoration: underline; }
+  .book.alt { margin-top: 0; font-weight: 400; color: var(--muted); }
 
   .list-note { margin: 8px 2px 0; font-size: 13px; color: var(--muted); }
 
@@ -607,7 +608,7 @@
       <section class="tiles" id="tiles" aria-label="Überblick"></section>
       <section id="compare" hidden></section>
       <section id="listSec"></section>
-      <p class="fine">Preise für 1 Erwachsenen in Euro, wie Kiwi.com sie beim Abruf meldet. Bei Hin &amp; Rück ist es der Gesamtpreis für beide Flüge. Endpreis und Gepäck bei der Buchung prüfen.</p>
+      <p class="fine">Preise für 1 Erwachsenen in Euro, wie Kiwi.com sie beim Abruf meldet. Bei Hin &amp; Rück ist es der Gesamtpreis für beide Flüge. Kiwi.com rechnet eigene Gebühren ein und führt nicht jeden Flug, vor allem kurz vor Abflug. Die Preise können deshalb über denen der Airline oder von Google Flights liegen. „Google Flights vergleichen“ öffnet dieselbe Strecke am selben Tag dort. Endpreis und Gepäck bei der Buchung prüfen.</p>
     </main>
   </div>
 </div>
@@ -1000,6 +1001,14 @@
   const flap = (code) => `<span class="code">${[...String(code || "???").slice(0, 3)].map((c) => `<i>${esc(c)}</i>`).join("")}</span>`;
   const originPill = (o) => `<span class="pill ${AIRPORTS[o].cls}">ab ${AIRPORTS[o].city}</span>`;
 
+  // Same route and dates on Google Flights, which often lists the airline's own (lower) fare.
+  function googleUrl(it) {
+    const q = it.inb
+      ? `Flights from ${it.out.from} to ${it.destCode} on ${it.out.dep.date} through ${it.inb.dep.date}`
+      : `Flights from ${it.out.from} to ${it.destCode} on ${it.out.dep.date} one way`;
+    return `https://www.google.com/travel/flights?hl=de&gl=AT&curr=EUR&q=${encodeURIComponent(q)}`;
+  }
+
   function stopText(l) {
     if (l.stops === 0) return '<span class="direct">Direkt</span>';
     const via = l.via.length ? ` in ${l.via.join(", ")}` : "";
@@ -1044,6 +1053,7 @@
         <div class="amount">${esc(eur.format(it.price))}</div>
         <div class="per">${ret ? "Hin + Rück gesamt" : "pro Person"}</div>
         ${it.url ? `<a class="book" href="${esc(it.url)}" target="_blank" rel="noopener noreferrer">Bei Kiwi.com ansehen ↗</a>` : ""}
+        <a class="book alt" href="${esc(googleUrl(it))}" target="_blank" rel="noopener noreferrer">Google Flights vergleichen ↗</a>
       </div>
     </li>`;
   }
